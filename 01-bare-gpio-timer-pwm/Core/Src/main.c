@@ -54,22 +54,6 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void TIM2_IRQHandler(void) {
-	if (TIM2->SR & TIM_SR_UIF) {
-		TIM2->SR &= ~TIM_SR_UIF;
-
-		static uint8_t ledState = 0;   // declared once, persists across calls
-
-		if (ledState == 0) {
-			GPIOA->BSRR |= GPIO_BSRR_BS0;
-			ledState = 1;
-		} else {
-			GPIOA->BSRR |= GPIO_BSRR_BR0;
-			ledState = 0;
-		}
-	}
-}
-
 /* USER CODE END 0 */
 
 /**
@@ -105,26 +89,38 @@ int main(void)
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
   RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
 
-  GPIOA->MODER &= ~GPIO_MODER_MODER0;
-  GPIOA->MODER |= GPIO_MODER_MODER0_0;
+  GPIOA->MODER &= ~GPIO_MODER_MODER1;
+  GPIOA->MODER |= GPIO_MODER_MODER1_1;
 
-  GPIOA->OTYPER &= ~GPIO_OTYPER_OT0;
-  GPIOA->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED0;
-  GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD0;
+  GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL1;
+  GPIOA->AFR[0] |= (1U << GPIO_AFRL_AFSEL1_Pos);
 
-  TIM2->PSC = 15999;
+  TIM2->CCMR1 &= ~(TIM_CCMR1_CC2S | TIM_CCMR1_OC2M);
+  TIM2->CCMR1 |= (6U << TIM_CCMR1_OC2M_Pos);
+  TIM2->CCMR1 |= TIM_CCMR1_OC2PE;
+
+  TIM2->CCER |= TIM_CCER_CC2E;
+
+  TIM2->PSC = 15;
   TIM2->ARR = 999;
-
-  TIM2->DIER |= TIM_DIER_UIE;
-  NVIC_EnableIRQ(TIM2_IRQn);
 
   TIM2->CR1 |= TIM_CR1_CEN;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint16_t duty = 0;
+  int8_t direction = 1;
   while (1)
   {
+	  TIM2->CCR2 = duty;
+
+	  for (volatile uint32_t i = 0; i < 3000; i++) {}
+
+	  duty += direction;
+	  if (duty >= 999) direction = -1;
+	  if (duty == 0) direction = 1;
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
