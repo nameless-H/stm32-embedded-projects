@@ -34,7 +34,7 @@ Companion repo: [arduino-embedded-fundamentals](link-to-that-repo) (Stage 3).
 - [x] PWM (bare-metal + HAL comparison)
 - [x] PLL clock configuration
 - [x] UART packet protocol + CRC validation
-- [ ] Command dispatch
+- [x] Command dispatch
 - [ ] ADC + DMA multi-channel sampler
 - [ ] PWM servo controller (UART command interface)
 - [ ] I2C sensor dashboard
