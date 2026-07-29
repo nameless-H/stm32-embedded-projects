@@ -75,19 +75,6 @@ void USART1_IRQHandler(void) {
 		}
 	}
 }
-
-void TIM2_IRQHandler(void) {
-	if (TIM2->SR & TIM_SR_UIF) {
-		TIM2->SR &= ~TIM_SR_UIF; // Clear interrupt flag
-
-		// Timeout occurred! Reset parser state machine back to start
-		parser.state = WAIT_START;
-
-		// Stop the timer until the next byte arrives
-		TIM2->CR1 &= ~TIM_CR1_CEN;
-	}
-}
-
 /* USER CODE END 0 */
 
 /**
