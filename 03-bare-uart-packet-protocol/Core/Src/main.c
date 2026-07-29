@@ -67,6 +67,25 @@ void USART1_IRQHandler(void) {
 		uint8_t byte = USART1->DR;
 		push(byte);
 	}
+
+	if (USART1->SR & USART_SR_IDLE) {
+		(void)USART1->DR;  // reading SR then DR clears IDLE — required sequence
+		if (parser.state != WAIT_START) {
+			parser.state = WAIT_START;  // reset stuck parser
+		}
+	}
+}
+
+void TIM2_IRQHandler(void) {
+	if (TIM2->SR & TIM_SR_UIF) {
+		TIM2->SR &= ~TIM_SR_UIF; // Clear interrupt flag
+
+		// Timeout occurred! Reset parser state machine back to start
+		parser.state = WAIT_START;
+
+		// Stop the timer until the next byte arrives
+		TIM2->CR1 &= ~TIM_CR1_CEN;
+	}
 }
 
 /* USER CODE END 0 */
@@ -123,6 +142,7 @@ int main(void)
   USART1->CR1 |= USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
 
   USART1->CR1 |= USART_CR1_RXNEIE;
+  USART1->CR1 |= USART_CR1_IDLEIE;
   NVIC_EnableIRQ(USART1_IRQn);
 
   /* USER CODE END 2 */
