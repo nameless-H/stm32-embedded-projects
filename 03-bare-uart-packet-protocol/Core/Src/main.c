@@ -24,6 +24,8 @@
 
 #include "ring_buffer.h"
 #include "packet_parser.h"
+#include "command_dispatch.h"
+#include "packet_sender.h"
 
 /* USER CODE END Includes */
 
@@ -108,6 +110,9 @@ int main(void)
   GPIOA->MODER &= ~GPIO_MODER_MODER10;
   GPIOA->MODER |= GPIO_MODER_MODER10_1;
 
+  GPIOA->MODER &= ~GPIO_MODER_MODER0;
+  GPIOA->MODER |= GPIO_MODER_MODER0_0;
+
   GPIOA->AFR[1] &= ~GPIO_AFRH_AFSEL9;
   GPIOA->AFR[1] |= (7U << GPIO_AFRH_AFSEL9_Pos);
 
@@ -129,11 +134,12 @@ int main(void)
 	  uint8_t byte;
 
 	  if (pop(&byte)) {
-		  if (parser_feed(&parser, byte))
-			  for (uint8_t i = 0; i < parser.length; i++) {
-				  while (!(USART1->SR & USART_SR_TXE)) {}
-				  USART1->DR = parser.data[i];
-			  }
+		  if (parser_feed(&parser, byte)) {
+			  uint8_t resp_data[MAX_PAYLOAD_LEN];
+			  uint8_t resp_len = 0;
+			  ResponseCode code = dispatch_command(&parser, resp_data, &resp_len);
+			  send_response(code, resp_data, resp_len);
+		  }
 	  }
 
     /* USER CODE END WHILE */
